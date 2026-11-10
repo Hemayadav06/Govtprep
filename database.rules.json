@@ -1,0 +1,100 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "students": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['uid', 'email', 'displayName', 'targetExam', 'createdAt', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('email').val() === auth.token.email && newData.child('displayName').isString() && newData.child('displayName').val().length >= 2 && newData.child('displayName').val().length <= 100 && newData.child('targetExam').isString() && newData.child('targetExam').val().length > 0 && newData.child('targetExam').val().length <= 100 && newData.child('createdAt').isNumber() && newData.child('updatedAt').isNumber() && (!newData.child('studyGoal').exists() || (newData.child('studyGoal').isString() && newData.child('studyGoal').val().length <= 500))"
+      }
+    },
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['uid', 'displayName', 'targetExam', 'createdAt', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('displayName').isString() && newData.child('displayName').val().length >= 2 && newData.child('displayName').val().length <= 100 && newData.child('targetExam').isString() && newData.child('targetExam').val().length > 0 && newData.child('targetExam').val().length <= 100 && newData.child('createdAt').isNumber() && newData.child('updatedAt').isNumber() && (!newData.child('studyGoal').exists() || (newData.child('studyGoal').isString() && newData.child('studyGoal').val().length <= 500))"
+      }
+    },
+    "testResults": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$resultId": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['id', 'uid', 'type', 'title', 'questions', 'answers', 'total', 'correct', 'incorrect', 'unanswered', 'score', 'accuracy', 'elapsedSeconds', 'completedAt', 'createdAt']) && newData.child('id').val() === $resultId && newData.child('uid').val() === $uid && (newData.child('type').val() === 'practice' || newData.child('type').val() === 'mock') && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 150 && newData.child('total').isNumber() && newData.child('total').val() > 0 && newData.child('total').val() <= 100 && newData.child('questions').hasChildren() && newData.child('correct').isNumber() && newData.child('incorrect').isNumber() && newData.child('unanswered').isNumber() && newData.child('correct').val() + newData.child('incorrect').val() + newData.child('unanswered').val() === newData.child('total').val() && newData.child('score').isString() && newData.child('accuracy').isNumber() && newData.child('accuracy').val() >= 0 && newData.child('accuracy').val() <= 100 && newData.child('elapsedSeconds').isNumber() && newData.child('elapsedSeconds').val() >= 0 && newData.child('elapsedSeconds').val() <= 86400 && newData.child('completedAt').isString() && newData.child('createdAt').isNumber()",
+          "answers": {
+            "$questionIndex": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3 && newData.val() % 1 === 0"
+            }
+          }
+        }
+      }
+    },
+    "studyPlans": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$planId": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['uid', 'day', 'tasks', 'goal', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('day').isString() && newData.child('day').val() === $planId && newData.child('goal').isString() && newData.child('goal').val().length <= 500 && newData.child('updatedAt').isNumber()",
+          "tasks": {
+            "$taskId": {
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        }
+      }
+    },
+    "bookmarks": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$questionId": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['uid', 'questionId', 'question', 'subject', 'createdAt']) && newData.child('uid').val() === $uid && newData.child('questionId').val() === $questionId && newData.child('question').isString() && newData.child('question').val().length > 0 && newData.child('question').val().length <= 1000 && newData.child('subject').isString() && newData.child('subject').val().length > 0 && newData.child('subject').val().length <= 50 && newData.child('createdAt').isNumber()"
+        }
+      }
+    },
+    "exams": {
+      ".read": "auth != null",
+      "$examId": {
+        ".write": "auth != null && auth.token.admin === true",
+        ".validate": "newData.hasChildren(['name', 'area', 'date', 'icon', 'mode', 'detail'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+        "area": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 150" },
+        "date": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "icon": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 12" },
+        "mode": { ".validate": "newData.val() === 'graduate' || newData.val() === '12th'" },
+        "detail": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300" }
+      }
+    },
+    "questions": {
+      ".read": "auth != null",
+      "$questionId": {
+        ".write": "auth != null && auth.token.admin === true",
+        ".validate": "newData.hasChildren(['subject', 'prompt', 'options', 'answer', 'explanation'])",
+        "subject": { ".validate": "newData.val() === 'aptitude' || newData.val() === 'reasoning' || newData.val() === 'english' || newData.val() === 'gk' || newData.val() === 'science' || newData.val() === 'computer'" },
+        "prompt": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000" },
+        "options": {
+          ".validate": "newData.hasChildren(['0', '1', '2', '3'])",
+          "$optionId": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300" }
+        },
+        "answer": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3 && newData.val() % 1 === 0" },
+        "explanation": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000" }
+      }
+    },
+    "jobNotifications": {
+      ".read": "auth != null",
+      "$jobId": {
+        ".write": "auth != null && auth.token.admin === true",
+        ".validate": "newData.hasChildren(['title', 'organization', 'logo', 'eligibility', 'posts', 'deadline', 'category', 'detail'])",
+        "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 180" },
+        "organization": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 150" },
+        "logo": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 12" },
+        "eligibility": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 180" },
+        "posts": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "deadline": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "category": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+        "detail": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 1000" }
+      }
+    }
+  }
+}

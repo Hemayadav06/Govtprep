@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <meta name="description" content="Your focused space for preparing for Indian government competitive examinations.">
+    <title>GovtPrep — Prepare with purpose</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=20261110-papers">
+  </head>
+  <body>
+    <div class="mobile-topbar">
+      <a class="brand brand-mobile" href="#/dashboard" aria-label="GovtPrep home"><span class="brand-icon">g</span><span>govt<span class="brand-accent">prep</span></span></a>
+      <button class="icon-button mobile-menu-button" type="button" aria-label="Open navigation" data-menu-toggle><span></span><span></span><span></span></button>
+    </div>
+    <div class="sidebar-backdrop" data-menu-close></div>
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#/dashboard"><span class="brand-icon">g</span><span>govt<span class="brand-accent">prep</span></span></a>
+      <div class="sidebar-label">YOUR SPACE</div>
+      <nav class="side-nav">
+        <a href="#/home" data-route="home"><span class="nav-icon">⌂</span>Home</a>
+        <a href="#/dashboard" data-route="dashboard"><span class="nav-icon">⌂</span>Dashboard</a>
+        <a href="#/exams" data-route="exams"><span class="nav-icon">▤</span>Exam preparation</a>
+        <a href="#/practice" data-route="practice"><span class="nav-icon">◎</span>Practice tests</a>
+        <a href="#/mock-tests" data-route="mock-tests"><span class="nav-icon">◷</span>Mock tests</a>
+        <a href="#/previous-papers" data-route="previous-papers"><span class="nav-icon">▧</span>Previous Year Papers</a>
+        <a href="#/planner" data-route="planner"><span class="nav-icon">▦</span>Study planner</a>
+      </nav>
+      <div class="sidebar-label sidebar-label-spaced">EXPLORE</div>
+      <nav class="side-nav">
+        <a href="#/current-affairs" data-route="current-affairs"><span class="nav-icon">◉</span>Current affairs<span class="nav-badge">NEW</span></a>
+        <a href="#/video-classes" data-route="video-classes"><span class="nav-icon">▶</span>Telugu-English classes</a>
+        <a href="#/assistant" data-route="assistant"><span class="nav-icon">✳</span>AI study assistant</a>
+        <a href="#/jobs" data-route="jobs"><span class="nav-icon">▣</span>Job notifications<span class="nav-dot"></span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-help"><div class="help-spark">✳</div><strong>Small steps, big goals.</strong><p>Keep showing up. Your future self is cheering for you.</p><a href="#/planner">See your plan <span>→</span></a></div>
+        <a class="profile-link" href="#/login" data-profile><span class="avatar" data-profile-avatar>A</span><span class="profile-copy"><strong data-profile-name>Arjun Sharma</strong><small data-profile-exam>SSC CGL aspirant</small></span><span class="profile-more">···</span></a>
+        <button class="button secondary small logout-button" type="button" data-logout hidden>Sign out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><strong id="page-label">Dashboard</strong></div>
+        <div class="topbar-actions"><span class="streak-pill"><span>✦</span> 7 day streak</span><button class="icon-button notification-button" aria-label="Notifications" type="button" data-notification><span>♧</span><i></i></button><a class="text-link auth-entry" href="#/login" data-auth-login>Sign in</a><button class="top-avatar" type="button" aria-label="Open profile" data-profile-button>A</button></div>
+      </header>
+      <div id="app" class="page-container"></div>
+    </main>
+    <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="app.js?v=20261110-papers"></script>
+  </body>
+</html>

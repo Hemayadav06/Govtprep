@@ -1,0 +1,338 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function validText(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    match /students/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'targetExam', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && validText(request.resource.data.displayName, 100)
+        && request.resource.data.displayName.size() >= 2
+        && validText(request.resource.data.targetExam, 100)
+        && request.resource.data.targetExam.size() > 0
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if false;
+    }
+
+    match /profiles/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'targetExam', 'studyGoal', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && validText(request.resource.data.displayName, 100)
+        && request.resource.data.displayName.size() >= 2
+        && validText(request.resource.data.targetExam, 100)
+        && request.resource.data.targetExam.size() > 0
+        && validText(request.resource.data.studyGoal, 500)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if false;
+    }
+
+    match /exams/{examId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.token.admin == true;
+    }
+
+    match /questions/{questionId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.token.admin == true;
+    }
+
+    match /testResults/{uid}/results/{resultId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'id', 'uid', 'type', 'title', 'questions', 'answers', 'total',
+          'correct', 'incorrect', 'unanswered', 'score', 'accuracy',
+          'elapsedSeconds', 'completedAt', 'createdAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.id == resultId
+        && request.resource.data.type in ['practice', 'mock']
+        && validText(request.resource.data.title, 150)
+        && request.resource.data.title.size() > 0
+        && request.resource.data.total is int
+        && request.resource.data.total > 0
+        && request.resource.data.total <= 100
+        && request.resource.data.questions is list
+        && request.resource.data.questions.size() == request.resource.data.total
+        && request.resource.data.answers is map
+        && request.resource.data.answers.size() <= request.resource.data.total
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= request.resource.data.total
+        && request.resource.data.incorrect is int
+        && request.resource.data.incorrect >= 0
+        && request.resource.data.incorrect <= request.resource.data.total
+        && request.resource.data.unanswered is int
+        && request.resource.data.unanswered >= 0
+        && request.resource.data.unanswered <= request.resource.data.total
+        && request.resource.data.correct + request.resource.data.incorrect + request.resource.data.unanswered == request.resource.data.total
+        && validText(request.resource.data.score, 20)
+        && request.resource.data.accuracy is int
+        && request.resource.data.accuracy >= 0
+        && request.resource.data.accuracy <= 100
+        && request.resource.data.elapsedSeconds is int
+        && request.resource.data.elapsedSeconds >= 0
+        && request.resource.data.elapsedSeconds <= 86400
+        && request.resource.data.completedAt is string
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /studyPlans/{uid}/plans/{planId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'day', 'tasks', 'goal', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && validText(request.resource.data.day, 40)
+        && request.resource.data.day.size() > 0
+        && request.resource.data.day == planId
+        && validText(request.resource.data.goal, 500)
+        && request.resource.data.tasks is map
+        && request.resource.data.tasks.size() <= 50
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    match /bookmarks/{uid}/items/{questionId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'questionId', 'question', 'subject', 'createdAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.questionId == questionId
+        && validText(request.resource.data.question, 1000)
+        && request.resource.data.question.size() > 0
+        && validText(request.resource.data.subject, 50)
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /aiChats/{uid}/conversations/{conversationId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['title', 'createdAt', 'updatedAt'])
+        && validText(request.resource.data.title, 80)
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['title', 'createdAt', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'updatedAt'])
+        && validText(request.resource.data.title, 80)
+        && request.resource.data.updatedAt is timestamp;
+
+      match /messages/{messageId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['role', 'text', 'mode', 'createdAt'])
+          && request.resource.data.role in ['user', 'assistant']
+          && validText(request.resource.data.text, 8000)
+          && request.resource.data.mode in ['tutor', 'doubt']
+          && request.resource.data.createdAt is timestamp;
+      }
+    }
+
+    match /aiQuestions/{uid}/items/{questionId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'subject', 'difficulty', 'question', 'options', 'answerIndex', 'explanation', 'topic', 'createdAt'
+        ])
+        && request.resource.data.subject in ['aptitude', 'reasoning', 'english', 'gk', 'science', 'computer']
+        && request.resource.data.difficulty in ['easy', 'medium', 'hard']
+        && validText(request.resource.data.question, 1000)
+        && request.resource.data.options is list
+        && request.resource.data.options.size() == 4
+        && validText(request.resource.data.options[0], 300)
+        && validText(request.resource.data.options[1], 300)
+        && validText(request.resource.data.options[2], 300)
+        && validText(request.resource.data.options[3], 300)
+        && request.resource.data.answerIndex is int
+        && request.resource.data.answerIndex >= 0
+        && request.resource.data.answerIndex <= 3
+        && validText(request.resource.data.explanation, 2000)
+        && validText(request.resource.data.topic, 100)
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /aiBookmarks/{uid}/items/{bookmarkId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['kind', 'prompt', 'text', 'subject', 'createdAt'])
+        && request.resource.data.kind in ['explanation', 'question']
+        && validText(request.resource.data.prompt, 1000)
+        && validText(request.resource.data.text, 8000)
+        && validText(request.resource.data.subject, 100)
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /learningProgress/{uid}/items/{videoId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'videoId', 'subject', 'topic', 'title', 'channel', 'bookmarked', 'completed', 'updatedAt'
+        ])
+        && request.resource.data.videoId == videoId
+        && request.resource.data.subject in [
+          'aptitude', 'reasoning', 'english', 'gk', 'science', 'computer', 'current-affairs'
+        ]
+        && validText(request.resource.data.topic, 180)
+        && validText(request.resource.data.title, 300)
+        && validText(request.resource.data.channel, 120)
+        && request.resource.data.bookmarked is bool
+        && request.resource.data.completed is bool
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    match /previousYearPapers/{paperId} {
+      allow read: if signedIn() && (resource.data.published == true || isAdmin());
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'examId', 'examName', 'category', 'year', 'subject', 'title', 'sourceName',
+          'sourceUrl', 'pdfPath', 'pdfUrl', 'answerKeyPath', 'answerKeyUrl',
+          'questionCount', 'published', 'addedBy', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.examId in [
+          'ssc-cgl', 'ssc-chsl', 'ibps-po', 'ibps-clerk', 'sbi-po', 'sbi-clerk',
+          'rrb-ntpc', 'rrb-group-d', 'appsc-group-1', 'appsc-group-2', 'police-recruitment'
+        ]
+        && validText(request.resource.data.examName, 100)
+        && request.resource.data.category in ['SSC', 'Banking', 'Railway', 'State PSC', 'Police']
+        && request.resource.data.year is int
+        && request.resource.data.year >= 1990
+        && request.resource.data.year <= 2100
+        && request.resource.data.subject in [
+          'Quantitative Aptitude', 'Logical Reasoning', 'English', 'General Awareness',
+          'General Science', 'Computer Knowledge', 'General Studies', 'Current Affairs', 'Other'
+        ]
+        && validText(request.resource.data.title, 180)
+        && request.resource.data.title.size() > 0
+        && validText(request.resource.data.sourceName, 120)
+        && request.resource.data.sourceName.size() > 0
+        && validText(request.resource.data.sourceUrl, 500)
+        && request.resource.data.sourceUrl.matches('https://.*')
+        && validText(request.resource.data.pdfPath, 300)
+        && request.resource.data.pdfPath.size() > 0
+        && validText(request.resource.data.pdfUrl, 2048)
+        && request.resource.data.pdfUrl.matches('https://.*')
+        && validText(request.resource.data.answerKeyPath, 300)
+        && validText(request.resource.data.answerKeyUrl, 2048)
+        && (request.resource.data.answerKeyUrl == '' || request.resource.data.answerKeyUrl.matches('https://.*'))
+        && request.resource.data.questionCount is int
+        && request.resource.data.questionCount >= 0
+        && request.resource.data.questionCount <= 500
+        && request.resource.data.published is bool
+        && request.resource.data.addedBy == request.auth.uid
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if isAdmin();
+
+      match /questions/{questionId} {
+        allow read: if signedIn() && (
+          get(/databases/$(database)/documents/previousYearPapers/$(paperId)).data.published == true || isAdmin()
+        );
+        allow create, update: if isAdmin()
+          && request.resource.data.keys().hasOnly([
+            'questionNumber', 'subject', 'prompt', 'options', 'answerIndex',
+            'explanationEnglish', 'explanationTelugu', 'createdAt'
+          ])
+          && request.resource.data.questionNumber is int
+          && request.resource.data.questionNumber >= 1
+          && request.resource.data.questionNumber <= 500
+          && request.resource.data.subject in [
+            'Quantitative Aptitude', 'Logical Reasoning', 'English', 'General Awareness',
+            'General Science', 'Computer Knowledge', 'General Studies', 'Current Affairs', 'Other'
+          ]
+          && validText(request.resource.data.prompt, 1500)
+          && request.resource.data.options is list
+          && request.resource.data.options.size() == 4
+          && validText(request.resource.data.options[0], 500)
+          && validText(request.resource.data.options[1], 500)
+          && validText(request.resource.data.options[2], 500)
+          && validText(request.resource.data.options[3], 500)
+          && request.resource.data.answerIndex is int
+          && request.resource.data.answerIndex >= 0
+          && request.resource.data.answerIndex <= 3
+          && validText(request.resource.data.explanationEnglish, 2000)
+          && validText(request.resource.data.explanationTelugu, 2000)
+          && request.resource.data.createdAt is timestamp;
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /paperAttempts/{uid}/attempts/{attemptId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'id', 'uid', 'paperId', 'examId', 'examName', 'year', 'paperTitle', 'total',
+          'correct', 'incorrect', 'unanswered', 'score', 'accuracy', 'answers',
+          'elapsedSeconds', 'attemptedAt'
+        ])
+        && request.resource.data.id == attemptId
+        && request.resource.data.uid == uid
+        && validText(request.resource.data.paperId, 120)
+        && request.resource.data.examId in [
+          'ssc-cgl', 'ssc-chsl', 'ibps-po', 'ibps-clerk', 'sbi-po', 'sbi-clerk',
+          'rrb-ntpc', 'rrb-group-d', 'appsc-group-1', 'appsc-group-2', 'police-recruitment'
+        ]
+        && validText(request.resource.data.examName, 100)
+        && request.resource.data.year is int
+        && request.resource.data.year >= 1990
+        && request.resource.data.year <= 2100
+        && validText(request.resource.data.paperTitle, 180)
+        && request.resource.data.total is int
+        && request.resource.data.total > 0
+        && request.resource.data.total <= 500
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= request.resource.data.total
+        && request.resource.data.incorrect is int
+        && request.resource.data.incorrect >= 0
+        && request.resource.data.incorrect <= request.resource.data.total
+        && request.resource.data.unanswered is int
+        && request.resource.data.unanswered >= 0
+        && request.resource.data.unanswered <= request.resource.data.total
+        && request.resource.data.correct + request.resource.data.incorrect + request.resource.data.unanswered == request.resource.data.total
+        && validText(request.resource.data.score, 20)
+        && request.resource.data.accuracy is int
+        && request.resource.data.accuracy >= 0
+        && request.resource.data.accuracy <= 100
+        && request.resource.data.answers is map
+        && request.resource.data.answers.size() <= request.resource.data.total
+        && request.resource.data.elapsedSeconds is int
+        && request.resource.data.elapsedSeconds >= 0
+        && request.resource.data.elapsedSeconds <= 21600
+        && request.resource.data.attemptedAt is timestamp;
+      allow update: if false;
+    }
+
+    match /jobNotifications/{jobId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.token.admin == true;
+    }
+  }
+}
